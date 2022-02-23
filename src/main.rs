@@ -1,4 +1,8 @@
+mod pool;
+
 use std::{io::{self, Read, Write}, net::{TcpStream, TcpListener}, thread, time::Duration};
+
+use crate::pool::ThreadPool;
 
 fn handle_client(mut stream: TcpStream) {
     println!("start");
@@ -18,9 +22,13 @@ fn handle_client(mut stream: TcpStream) {
 
 fn main() -> io::Result<()> {
     let listener = TcpListener::bind("127.0.0.1:8888")?;
+    let threadpool = ThreadPool::new(2);
     println!("listening");
     for stream in listener.incoming() {
-        handle_client(stream?);
+        let stream = stream?;
+        threadpool.launch(move || {
+            handle_client(stream);
+        });
     }
     Ok(())
 }
